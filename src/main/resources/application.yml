@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: ecom
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerrcetask2?createDatabaseIfNotExist=true
+    username: root
+    password: Santosh123@
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+server:
+  port: 8090
+
+jwt:
+  secret: YourSuperSecretKeyForJwtSigning1234567890
