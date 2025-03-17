@@ -1,18 +1,13 @@
-
 package com.zestindiait.controller;
-
 import com.zestindiait.dto.LoginRequest;
 import com.zestindiait.dto.RegisterRequest;
 import com.zestindiait.entity.User;
 import com.zestindiait.security.JwtUtils;
 import com.zestindiait.service.UserService;
-
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Optional;
 
 @RestController

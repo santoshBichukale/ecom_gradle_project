@@ -48,15 +48,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (IllegalArgumentException e) {
                 logger.error("Error extracting username from token!", e);
             } catch (ExpiredJwtException e) {
-                logger.error("JWT token has expired!", e);
+                logger.warn("JWT Token has expired: {}", e.getMessage());
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has expired. Please login again.");
+                return;
             } catch (MalformedJwtException e) {
                 logger.error("Invalid JWT token!", e);
             }
+
         } else {
             logger.warn("Authorization header is missing or does not contain Bearer token.");
         }
 
-        // Validate token and authenticate user
+
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if (jwtUtils.validateToken(token, userDetails)) {

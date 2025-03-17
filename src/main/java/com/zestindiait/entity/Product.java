@@ -20,6 +20,6 @@ public class Product {
     private Double price;
 
     @ManyToOne
-    @JoinColumn(name = "category_id", nullable = true) 
-    private Category category; // Unidirectional: No need for @JsonBackReference
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 }

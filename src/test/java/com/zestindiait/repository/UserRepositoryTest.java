@@ -28,7 +28,7 @@ class UserRepositoryTest {
         user.setId(1L);
         user.setUsername("testuser");
         user.setPassword("encodedPassword");
-        user.setRole(Role.USER);
+        user.setRole(Role.ADMIN);
     }
 
     @Test

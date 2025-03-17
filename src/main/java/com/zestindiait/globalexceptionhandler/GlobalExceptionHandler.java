@@ -17,6 +17,7 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+
     @ExceptionHandler({
             UserNotFoundException.class,
             ProductNotFoundException.class,
@@ -35,11 +36,6 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<Map<String, Object>> handleBadRequestExceptions(RuntimeException ex, WebRequest request) {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request.getDescription(false));
-    }
-
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleUnauthorizedException(InvalidCredentialsException ex, WebRequest request) {
-        return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED, request.getDescription(false));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
