@@ -1,6 +1,7 @@
 package com.zestindiait.controller;
 import com.zestindiait.dto.LoginRequest;
 import com.zestindiait.dto.RegisterRequest;
+import com.zestindiait.entity.Category;
 import com.zestindiait.entity.User;
 import com.zestindiait.security.JwtUtils;
 import com.zestindiait.service.UserService;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -55,6 +58,10 @@ public class AuthController {
     public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody RegisterRequest registerRequest) {
         User updatedUser = userService.updateUser(id, registerRequest);
         return ResponseEntity.ok("User updated successfully: " + updatedUser.getUsername());
+    }
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @DeleteMapping("/user/{id}")
