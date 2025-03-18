@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface UserService extends UserDetailsService {
     User registerUser(RegisterRequest request);
     Optional<User> findByUsername(String username);
-    public User loginUser(LoginRequest request);
+    User loginUser(LoginRequest request);
+    User updateUser(Long id, RegisterRequest request);
+    void deleteUser(Long id);
 }

@@ -1,20 +1,20 @@
 package com.zestindiait.repository;
 
 import com.zestindiait.entity.Order;
+import com.zestindiait.entity.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,14 +24,19 @@ class OrderRepositoryTest {
     private OrderRepository orderRepository;
 
     private Order order;
+    private Product product;
 
     @BeforeEach
     void setUp() {
+        product = new Product();
+        product.setId(1L);
+        product.setName("Laptop");
+        product.setQuantity(2);
+
         order = new Order();
         order.setId(1L);
-        order.setProduct("Laptop");
-        order.setQuantity(2);
-        order.setOrderDate("16/03/25");
+        order.setProduct(product);
+        order.setOrderDate("2025-03-16");
     }
 
     @Test
@@ -42,8 +47,8 @@ class OrderRepositoryTest {
 
         assertNotNull(savedOrder);
         assertEquals(1L, savedOrder.getId());
-        assertEquals("Laptop", savedOrder.getProduct());
-        assertEquals(2, savedOrder.getQuantity());
+        assertEquals("Laptop", savedOrder.getProduct().getName());
+        assertEquals(2, savedOrder.getProduct().getQuantity());
 
         verify(orderRepository, times(1)).save(any(Order.class));
     }
@@ -55,7 +60,7 @@ class OrderRepositoryTest {
         Optional<Order> foundOrder = orderRepository.findById(1L);
 
         assertTrue(foundOrder.isPresent());
-        assertEquals("Laptop", foundOrder.get().getProduct());
+        assertEquals("Laptop", foundOrder.get().getProduct().getName());
 
         verify(orderRepository, times(1)).findById(1L);
     }
@@ -73,10 +78,13 @@ class OrderRepositoryTest {
 
     @Test
     void testFindAllOrders() {
+        Product product2 = new Product();
+        product2.setId(2L);
+        product2.setName("Phone");
+
         Order order2 = new Order();
         order2.setId(2L);
-        order2.setProduct("Phone");
-        order2.setQuantity(1);
+        order2.setProduct(product2);
 
         when(orderRepository.findAll()).thenReturn(Arrays.asList(order, order2));
 

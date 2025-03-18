@@ -34,7 +34,7 @@ class ProductServiceImplTest {
     @BeforeEach
     void setUp() {
         Category category = new Category(1L, "Electronics");
-        product = new Product(1L, "Laptop", "Gaming Laptop", 1200.00, category);
+        product = new Product(1L, "Laptop", "Gaming Laptop", 1200.00,3, category);
     }
 
     @Test
@@ -60,7 +60,7 @@ class ProductServiceImplTest {
 
     @Test
     void testGetAllProducts() {
-        List<Product> productList = Arrays.asList(product, new Product(2L, "Phone", "Smartphone", 800.00, product.getCategory()));
+        List<Product> productList = Arrays.asList(product, new Product(2L, "Phone", "Smartphone", 800.00,3, product.getCategory()));
         when(productRepository.findAll()).thenReturn(productList);
 
         List<Product> result = productService.getAllProducts();
@@ -94,7 +94,7 @@ class ProductServiceImplTest {
 
     @Test
     void testUpdateProduct() {
-        Product updatedProduct = new Product(1L, "Updated Laptop", "Updated Description", 1500.00, product.getCategory());
+        Product updatedProduct = new Product(1L, "Updated Laptop", "Updated Description", 1500.00,3, product.getCategory());
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(any(Product.class))).thenReturn(updatedProduct);
@@ -113,7 +113,7 @@ class ProductServiceImplTest {
     void testUpdateProduct_ProductNotFound() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Product updatedProduct = new Product(1L, "Updated Laptop", "Updated Description", 1500.00, product.getCategory());
+        Product updatedProduct = new Product(1L, "Updated Laptop", "Updated Description", 1500.00,3, product.getCategory());
 
         ProductNotFoundException exception = assertThrows(ProductNotFoundException.class, () -> {
             productService.updateProduct(1L, updatedProduct);

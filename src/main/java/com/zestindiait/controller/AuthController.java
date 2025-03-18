@@ -50,4 +50,16 @@ public class AuthController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
+
+    @PutMapping("/user/{id}")
+    public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody RegisterRequest registerRequest) {
+        User updatedUser = userService.updateUser(id, registerRequest);
+        return ResponseEntity.ok("User updated successfully: " + updatedUser.getUsername());
+    }
+
+    @DeleteMapping("/user/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("User deleted successfully");
+    }
 }

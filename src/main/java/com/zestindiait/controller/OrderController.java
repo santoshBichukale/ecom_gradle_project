@@ -1,8 +1,10 @@
 package com.zestindiait.controller;
 
+
 import com.zestindiait.entity.Order;
 import com.zestindiait.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +18,11 @@ public class OrderController {
     private OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        return ResponseEntity.ok(orderService.createOrder(order));
+    public ResponseEntity<String> createOrder(@RequestBody Order order) {
+    Order newOrder  =  orderService.createOrder(order);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Order registered successfully Your Order Id is : " + newOrder.getId());
     }
 
     @GetMapping

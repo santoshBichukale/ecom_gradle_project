@@ -35,10 +35,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**","/api/products/public/**").permitAll()
                         .requestMatchers("/api/products/**", "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers("/api/products").authenticated()
-                        .requestMatchers("/api/orders", "/api/orders/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/orders", "/api/orders/**").hasAnyRole("ADMIN", "USER")
                         .anyRequest().denyAll()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))

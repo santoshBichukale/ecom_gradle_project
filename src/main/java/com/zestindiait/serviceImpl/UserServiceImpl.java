@@ -1,4 +1,3 @@
-
 package com.zestindiait.serviceImpl;
 
 import com.zestindiait.dto.LoginRequest;
@@ -81,5 +80,22 @@ public class UserServiceImpl implements UserService {
         }
 
         return user;
+    }
+
+    @Override
+    public User updateUser(Long id, RegisterRequest request) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found: " + id));
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(request.getRole());
+        return userRepository.save(user);
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User not found: " + id);
+        }
+        userRepository.deleteById(id);
     }
 }

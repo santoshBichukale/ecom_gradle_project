@@ -1,11 +1,9 @@
 package com.zestindiait.security;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
@@ -49,7 +47,7 @@ public class JwtUtils {
                 .claims(claims)
                 .subject(subject)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5))
                 .signWith(getSigningKey())
                 .compact();
     }

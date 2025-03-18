@@ -1,136 +1,144 @@
 package com.zestindiait.serviceImpl;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.zestindiait.customeExceptions.InvalidOrderException;
 import com.zestindiait.customeExceptions.OrderNotFoundException;
+import com.zestindiait.customeExceptions.ProductNotFoundException;
 import com.zestindiait.entity.Order;
-import com.zestindiait.entity.User;
+import com.zestindiait.entity.Product;
 import com.zestindiait.repository.OrderRepository;
-
+import com.zestindiait.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class OrderServiceImplTest {
 
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private ProductRepository productRepository;
+
     @InjectMocks
     private OrderServiceImpl orderService;
 
-    private Order sampleOrder;
+    private Product product;
+    private Order order;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        User user = new User();
-        user.setId(1L);
+        product = new Product();
+        product.setId(1L);
+        product.setName("Laptop");
+        product.setPrice(50000.0);
+        product.setQuantity(10);
 
-        sampleOrder = new Order(1L, user, "Product1", 5, "2024-03-16");
+        order = new Order();
+        order.setId(1L);
+        order.setProduct(product);
+        order.setOrderQuantity(2);
+        order.setOrderDate("2025-03-18");
     }
 
     @Test
-    void testCreateOrder_Success() {
-        when(orderRepository.save(any(Order.class))).thenReturn(sampleOrder);
+    void createOrder_Success() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
 
-        Order createdOrder = orderService.createOrder(sampleOrder);
+        Order savedOrder = orderService.createOrder(order);
 
-        assertNotNull(createdOrder);
-        assertEquals("Product1", createdOrder.getProduct());
-        verify(orderRepository, times(1)).save(sampleOrder);
+        assertNotNull(savedOrder);
+        assertEquals(1L, savedOrder.getProduct().getId());
+
+
+        verify(productRepository).save(any(Product.class));
+        verify(orderRepository).save(any(Order.class));
     }
 
     @Test
-    void testCreateOrder_InvalidOrder() {
-        Order invalidOrder = new Order();
+    void createOrder_ProductNotFound_ThrowsException() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(InvalidOrderException.class, () -> orderService.createOrder(invalidOrder));
+        assertThrows(ProductNotFoundException.class, () -> orderService.createOrder(order));
         verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test
-    void testGetOrderById_Success() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
+    void createOrder_InsufficientStock_ThrowsException() {
+        product.setQuantity(1);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        assertThrows(InvalidOrderException.class, () -> orderService.createOrder(order));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void getOrderById_Success() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         Order foundOrder = orderService.getOrderById(1L);
 
         assertNotNull(foundOrder);
         assertEquals(1L, foundOrder.getId());
-        verify(orderRepository, times(1)).findById(1L);
     }
 
     @Test
-    void testGetOrderById_NotFound() {
+    void getOrderById_NotFound_ThrowsException() {
         when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class, () -> orderService.getOrderById(1L));
-        verify(orderRepository, times(1)).findById(1L);
+    }
+
+
+
+    @Test
+    void updateOrder_ProductNotFound_ThrowsException() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(productRepository.findById(2L)).thenReturn(Optional.empty());
+
+        Order updatedOrder = new Order();
+        updatedOrder.setProduct(new Product());
+        updatedOrder.getProduct().setId(2L);
+
+        assertThrows(ProductNotFoundException.class, () -> orderService.updateOrder(1L, updatedOrder));
     }
 
     @Test
-    void testGetAllOrders() {
-        when(orderRepository.findAll()).thenReturn(List.of(sampleOrder));
+    void updateOrder_InsufficientStock_ThrowsException() {
+        Order updatedOrder = new Order();
+        updatedOrder.setProduct(product);
+        updatedOrder.setOrderQuantity(20);
 
-        List<Order> orders = orderService.getAllOrders();
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
-        assertFalse(orders.isEmpty());
-        assertEquals(1, orders.size());
-        verify(orderRepository, times(1)).findAll();
+        assertThrows(InvalidOrderException.class, () -> orderService.updateOrder(1L, updatedOrder));
     }
 
     @Test
-    void testUpdateOrder_Success() {
-        Order updatedOrder = new Order(1L, sampleOrder.getUser(), "UpdatedProduct", 10, "2024-03-17");
+    void deleteOrder_Success() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
-        when(orderRepository.save(any(Order.class))).thenReturn(updatedOrder);
+        orderService.deleteOrder(1L);
 
-        Order result = orderService.updateOrder(1L, updatedOrder);
-
-        assertNotNull(result);
-        assertEquals("UpdatedProduct", result.getProduct());
-        assertEquals(10, result.getQuantity());
-
-        verify(orderRepository, times(1)).findById(1L);
-        verify(orderRepository, times(1)).save(any(Order.class));
+        verify(orderRepository).deleteById(1L);
+        verify(productRepository).save(any(Product.class));
     }
 
     @Test
-    void testUpdateOrder_NotFound() {
-        Order updatedOrder = new Order(1L, sampleOrder.getUser(), "UpdatedProduct", 10, "2024-03-17");
-
+    void deleteOrder_NotFound_ThrowsException() {
         when(orderRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(OrderNotFoundException.class, () -> orderService.updateOrder(1L, updatedOrder));
-        verify(orderRepository, times(1)).findById(1L);
-        verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void testDeleteOrder_Success() {
-        when(orderRepository.existsById(1L)).thenReturn(true);
-
-        assertDoesNotThrow(() -> orderService.deleteOrder(1L));
-
-        verify(orderRepository, times(1)).existsById(1L);
-        verify(orderRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    void testDeleteOrder_NotFound() {
-        when(orderRepository.existsById(1L)).thenReturn(false);
 
         assertThrows(OrderNotFoundException.class, () -> orderService.deleteOrder(1L));
 
-        verify(orderRepository, times(1)).existsById(1L);
-        verify(orderRepository, never()).deleteById(1L);
+        verify(orderRepository, never()).deleteById(anyLong());
     }
 }

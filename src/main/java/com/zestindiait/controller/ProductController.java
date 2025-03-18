@@ -3,6 +3,7 @@ package com.zestindiait.controller;
 import com.zestindiait.entity.Product;
 import com.zestindiait.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,12 +18,15 @@ public class ProductController {
 
     
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-        return ResponseEntity.ok(productService.createProduct(product));
+    public ResponseEntity<String> createProduct(@RequestBody Product product) {
+
+        productService.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Product registered successfully Your Product name is : " + product.getName());
     }
 
   
-    @GetMapping
+    @GetMapping("/public")
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
