@@ -3,27 +3,27 @@ package com.zestindiait.serviceImpl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.zestindiait.customeExceptions.InvalidCredentialsException;
+import com.zestindiait.customeExceptions.UserAlreadyExistsException;
+import com.zestindiait.customeExceptions.UserNotFoundException;
 import com.zestindiait.dto.LoginRequest;
 import com.zestindiait.dto.RegisterRequest;
 import com.zestindiait.entity.Role;
 import com.zestindiait.entity.User;
-import com.zestindiait.customeExceptions.InvalidCredentialsException;
-import com.zestindiait.customeExceptions.UserAlreadyExistsException;
-import com.zestindiait.customeExceptions.UserNotFoundException;
 import com.zestindiait.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
+import java.util.List;
 import java.util.Optional;
 
-@ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
+
+    @InjectMocks
+    private UserServiceImpl userService;
 
     @Mock
     private UserRepository userRepository;
@@ -31,96 +31,136 @@ class UserServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
-    private UserServiceImpl userService;
-
     private User user;
 
     @BeforeEach
     void setUp() {
-        user = new User(1L, "user5", "encodedPassword", Role.USER);
+        MockitoAnnotations.openMocks(this);
+
+        user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+        user.setPassword("encodedPassword");
+        user.setRole(Role.USER);
     }
 
     @Test
-    void testLoadUserByUsername_UserFound() {
-        when(userRepository.findByUsername("user5")).thenReturn(Optional.of(user));
+    void registerUser_Success() {
+        RegisterRequest request = new RegisterRequest("newuser", "password", Role.USER);
 
-        UserDetails userDetails = userService.loadUserByUsername("user5");
-
-        assertNotNull(userDetails);
-        assertEquals("user5", userDetails.getUsername());
-        assertTrue(userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
-    }
-
-    @Test
-    void testLoadUserByUsername_UserNotFound() {
-        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
-
-        assertThrows(UserNotFoundException.class, () -> userService.loadUserByUsername("unknown"));
-    }
-
-    @Test
-    void testRegisterUser_Success() {
-        RegisterRequest request = new RegisterRequest("newUser", "password", Role.USER);
-        when(userRepository.findByUsername("newUser")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("newuser")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        User registeredUser = userService.registerUser(request);
+        User savedUser = userService.registerUser(request);
 
-        assertNotNull(registeredUser);
-        assertEquals("user5", registeredUser.getUsername());
+        assertNotNull(savedUser);
+        assertEquals("testuser", savedUser.getUsername());
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
     @Test
-    void testRegisterUser_UserAlreadyExists() {
-        RegisterRequest request = new RegisterRequest("user5", "password", Role.USER);
-        when(userRepository.findByUsername("user5")).thenReturn(Optional.of(user));
+    void registerUser_UserAlreadyExists() {
+        RegisterRequest request = new RegisterRequest("testuser", "password", Role.USER);
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
         assertThrows(UserAlreadyExistsException.class, () -> userService.registerUser(request));
     }
 
     @Test
-    void testLoginUser_Success() {
-        LoginRequest request = new LoginRequest("user5", "password");
-        when(userRepository.findByUsername("user5")).thenReturn(Optional.of(user));
+    void loginUser_Success() {
+        LoginRequest request = new LoginRequest("testuser", "password");
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "encodedPassword")).thenReturn(true);
 
         User loggedInUser = userService.loginUser(request);
 
         assertNotNull(loggedInUser);
-        assertEquals("user5", loggedInUser.getUsername());
+        assertEquals("testuser", loggedInUser.getUsername());
     }
 
     @Test
-    void testLoginUser_UserNotFound() {
+    void loginUser_UserNotFound() {
         LoginRequest request = new LoginRequest("unknown", "password");
+
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> userService.loginUser(request));
     }
 
     @Test
-    void testLoginUser_InvalidPassword() {
-        LoginRequest request = new LoginRequest("user5", "wrongPassword");
-        when(userRepository.findByUsername("user5")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
+    void loginUser_InvalidPassword() {
+        LoginRequest request = new LoginRequest("testuser", "wrongpassword");
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongpassword", "encodedPassword")).thenReturn(false);
 
         assertThrows(InvalidCredentialsException.class, () -> userService.loginUser(request));
     }
 
     @Test
-    void testFindByUsername_UserExists() {
-        when(userRepository.findByUsername("user5")).thenReturn(Optional.of(user));
+    void updateUser_Success() {
+        RegisterRequest request = new RegisterRequest("updateduser", "newpassword", Role.ADMIN);
 
-        Optional<User> foundUser = userService.findByUsername("user5");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("newpassword")).thenReturn("newEncodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        assertTrue(foundUser.isPresent());
-        assertEquals("user5", foundUser.get().getUsername());
+        User updatedUser = userService.updateUser(1L, request);
+
+        assertEquals("updateduser", updatedUser.getUsername());
+        assertEquals(Role.ADMIN, updatedUser.getRole());
     }
 
     @Test
-    void testFindByUsername_UserNotFound() {
+    void updateUser_UserNotFound() {
+        RegisterRequest request = new RegisterRequest("updateduser", "newpassword", Role.ADMIN);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.updateUser(1L, request));
+    }
+
+    @Test
+    void deleteUser_Success() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        userService.deleteUser(1L);
+
+        verify(userRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void deleteUser_UserNotFound() {
+        when(userRepository.existsById(1L)).thenReturn(false);
+
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(1L));
+    }
+
+    @Test
+    void getAllUsers_Success() {
+        when(userRepository.findAll()).thenReturn(List.of(user));
+
+        List<User> users = userService.getAllUsers();
+
+        assertEquals(1, users.size());
+        assertEquals("testuser", users.get(0).getUsername());
+    }
+
+    @Test
+    void findByUsername_Success() {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        Optional<User> foundUser = userService.findByUsername("testuser");
+
+        assertTrue(foundUser.isPresent());
+        assertEquals("testuser", foundUser.get().getUsername());
+    }
+
+    @Test
+    void findByUsername_NotFound() {
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
         Optional<User> foundUser = userService.findByUsername("unknown");

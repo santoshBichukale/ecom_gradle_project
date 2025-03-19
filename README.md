@@ -27,69 +27,36 @@ This project is a Spring Boot-based RESTful API for an e-commerce platform. It s
 ## Entity-Relationship Diagram (ERD)
 
 ![ERD](e-com1.drawio.png)
+## API Request Flow Diagram 
+![ERD](flow-Page-2.drawio.png)
 
-## 📊 **System Architecture - Data Flow**
-
-```
-                         +---------------------------+
-                         |        Client (User)      |
-                         +------------+--------------+
-                                      |
-                         +------------v--------------+
-                         |    Spring Boot REST API   |
-                         +------------+--------------+
-                                      |
-     +-------------------------------+--------------------------------+
-     |                               |                                |
-+----v----+                 +--------v---------+            +---------v-------+
-|  Security|                 |    Controllers   |            |  Exception     |
-|  Layer   |                 | (Product, User,  |            |  Handling      |
-|          |                 | Category, Order) |            |               |
-+----+----+                 +--------+---------+            +---------+-----+
-     |                               |                                |
-     |         +---------------------+-----------------+              |
-     |         |                                       |              |
-+----v----+ +---v---+                            +----v-----+   +----v----+
-|  Auth   | |  Role |                            |  Service |   | Error   |
-| Filter  | | Check |                            |  Layer   |   | Handler |
-+---------+ +-------+                            +----+-----+   +---------+
-                                                  |
-                                                  |
-                                             +----v-----+
-                                             |   JPA    |
-                                             | Repos    |
-                                             +----+-----+
-                                                  |
-                                          +-------v--------+
-                                          | Database (H2/  |
-                                          | MySQL/Postgres)|
-                                          +----------------+
-```
 
 ### 📌 **Data Flow Explanation**
 
-1. **Client (User):** Initiates requests via HTTP (e.g., product search, user registration).
+### 1. Client Request
+- Users send HTTP requests (e.g., registration, product retrieval) using REST clients (Postman, Angular frontend, etc.).
 
-2. **Spring Boot REST API:** Handles incoming requests and routes them to the appropriate controllers.
+### 2. Security Layer
+- Incoming requests pass through `JwtAuthenticationFilter`.
+- If the request is for public endpoints (e.g., `/api/auth/**`), it's allowed without authentication.
+- For protected routes (e.g., `/api/products`, `/api/orders`), JWT is validated.
+- Access is granted based on the user's role (e.g., `ADMIN`, `USER`).
 
-3. **Security Layer:**
-   - **Auth Filter:** Validates JWT tokens for secure endpoints.
-   - **Role Check:** Ensures users have the correct permissions.
+### 3. Controller Layer
+- Routes valid requests to the corresponding controllers (e.g., `ProductController`, `OrderController`).
+- Handles CRUD operations for users, products, categories, and orders.
 
-4. **Controllers:**
-   - Manage core modules: **User**, **Product**, **Category**, **Order**.
+### 4. Service Layer
+- Business logic for creating, updating, retrieving, and deleting entities.
+- Uses `UserService`, `ProductService`, etc., for interacting with the database.
 
-5. **Service Layer:**
-   - Contains business logic and interacts with repositories.
+### 5. Repository Layer (JPA)
+- CRUD operations are performed via `JpaRepository` interfaces.
+- Data is stored/retrieved from MySQL.
 
-6. **Exception Handling:**
-   - Captures and returns meaningful error responses to the client.
-
-7. **JPA Repositories:**
-   - Interface with the database to perform CRUD operations.
-
-8. **Database:**
-   - Supports **H2**, **MySQL**, or **Postgres** for storing application data.
+### 6. Response
+- Successful responses return the requested data (e.g., product list).
+- Errors trigger the `GlobalExceptionHandler`, returning appropriate HTTP status codes.
 
 
 ## Technologies Used
@@ -135,7 +102,7 @@ This project is a Spring Boot-based RESTful API for an e-commerce platform. It s
 1. Clone the repository:
 
     ```bash
-    git clone <repository-url>
+    git clone <https://github.com/santoshBichukale/ecom_gradle_project>
     cd e-commerce-api
     ```
 
