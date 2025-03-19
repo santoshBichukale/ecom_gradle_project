@@ -1,0 +1,41 @@
+#spring:
+#  datasource:
+#    url: jdbc:h2:mem:testdb
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password: pass
+#  h2:
+#    console:
+#      enabled: true     # Enables H2 console
+#      path: /h2-console # Access the console at /h2-console
+#  jpa:
+#    hibernate:
+#      ddl-auto: update  # Automatically updates schema without dropping data
+#    database-platform: org.hibernate.dialect.H2Dialect
+#    show-sql: true      # Displays SQL queries in the console
+#  sql:
+#    init:
+#      mode: always      # Ensures scripts always run on startup
+##      data-locations: classpath:/schema.sql # Loads data from data.sql
+#
+#
+spring:
+  datasource:
+    url: jdbc:h2:file:C:/Users/SANTOSH/ecommerce-db  # Ensure this path is correct
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: pass
+  h2:
+    console:
+      enabled: true       # Enables H2 console
+      path: /h2-console   # Access H2 console at this endpoint
+  jpa:
+    hibernate:
+      ddl-auto: update    # Updates schema without deleting data
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true        # Prints SQL queries in the console
+  sql:
+    init:
+      mode: always        # Runs data.sql after schema creation
+      data-locations: classpath:data.sql  # Points to your data.sql file
+s

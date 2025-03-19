@@ -33,21 +33,25 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http
+                .csrf(csrf -> csrf.disable()) // Disable CSRF completely
+                .headers(headers -> headers.frameOptions(frame -> frame.disable())) // Allow frames for H2 Console
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**","/api/products/public/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll() // Allow public access to H2
+                        .requestMatchers("/api/auth/**", "/api/products/public/**").permitAll()
                         .requestMatchers("/api/products/**", "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers("/api/products").authenticated()
-                        .requestMatchers("/api/orders", "/api/orders/**").hasAnyRole("ADMIN", "USER")
-                        .anyRequest().denyAll()
+                        .requestMatchers("/api/orders/**").hasAnyRole("ADMIN", "USER")
+                        .anyRequest().authenticated()
                 )
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+
+
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

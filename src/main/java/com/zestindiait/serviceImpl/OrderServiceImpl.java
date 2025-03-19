@@ -43,7 +43,7 @@ public class OrderServiceImpl implements OrderService {
 
 
         double totalPrice = product.getPrice() * order.getOrderQuantity();
-        order.setTotal_price(totalPrice);
+        order.setTotalprice(totalPrice);
 
         return orderRepository.save(order);
     }
@@ -94,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
 
         existingOrder.setOrderQuantity(updatedOrder.getOrderQuantity());
         existingOrder.setOrderDate(updatedOrder.getOrderDate());
-        existingOrder.setTotal_price(existingOrder.getProduct().getPrice() * updatedOrder.getOrderQuantity());
+        existingOrder.setTotalprice(existingOrder.getProduct().getPrice() * updatedOrder.getOrderQuantity());
 
         return orderRepository.save(existingOrder);
     }

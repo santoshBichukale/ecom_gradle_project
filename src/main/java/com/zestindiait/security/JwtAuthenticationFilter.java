@@ -34,6 +34,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+
+        // Bypass JWT validation for H2 Console and Public APIs
+        if (requestURI.startsWith("/h2-console") || requestURI.startsWith("/api/auth")) {
+            logger.info("Bypassing JWT Filter for URI: {}", requestURI);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String requestHeader = request.getHeader("Authorization");
         logger.info("Authorization Header: {}", requestHeader);
@@ -54,11 +62,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (MalformedJwtException e) {
                 logger.error("Invalid JWT token!", e);
             }
-
         } else {
             logger.warn("Authorization header is missing or does not contain Bearer token.");
+            filterChain.doFilter(request, response);
+            return;
         }
-
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -75,4 +83,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
+
 }
