@@ -11,6 +11,7 @@ import lombok.*;
 @ToString
 
 @Builder
+@Table(name = "users")
 public class User {
 
     @Id

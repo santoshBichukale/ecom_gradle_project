@@ -72,7 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.warn("JWT token validation failed for user: {}", username);
             }
         }
-
+        logger.info("Before request");
         filterChain.doFilter(request, response);
+       logger.info("After request");
     }
 }

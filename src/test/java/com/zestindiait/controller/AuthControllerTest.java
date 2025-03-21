@@ -5,95 +5,135 @@ import com.zestindiait.dto.RegisterRequest;
 import com.zestindiait.entity.Role;
 import com.zestindiait.entity.User;
 import com.zestindiait.security.JwtUtils;
-import com.zestindiait.service.UserService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.*;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+
+@ActiveProfiles("test")
 class AuthControllerTest {
 
-    @InjectMocks
-    private AuthController authController;
-
-    @Mock
-    private UserService userService;
-
-    @Mock
+    @Autowired
     private JwtUtils jwtUtils;
+
+
+     RestTemplate restTemplate=new RestTemplate();
+
+    @LocalServerPort
+    private int port;
+
+    private String token;
+    private String baseUrl;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        baseUrl = "http://localhost:" + port + "/api/auth";
+        token = jwtUtils.generateToken("admin");
     }
 
     @Test
-    void testRegisterUser_Success() {
-        RegisterRequest registerRequest = new RegisterRequest("john", "password", Role.USER);
-        User mockUser = new User(1L, "john", "password", Role.USER);
+    void testRegisterUser() {
+        RegisterRequest request = new RegisterRequest("admin4", "123", Role.ADMIN);
 
-        when(userService.registerUser(registerRequest)).thenReturn(mockUser);
+        ResponseEntity<String> response = restTemplate.postForEntity(baseUrl + "/register", request, String.class);
 
-        ResponseEntity<String> response = authController.registerUser(registerRequest);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertTrue(response.getBody().contains("User registered successfully"));
+        Assertions.assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
     @Test
-    void testRegisterUser_InvalidRequest() {
-        ResponseEntity<String> response = authController.registerUser(null);
+    void testLoginUser() {
+        LoginRequest request = new LoginRequest("admin", "123");
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Request cannot be null or incomplete", response.getBody());
+        ResponseEntity<String> response = restTemplate.postForEntity(baseUrl + "/login", request, String.class);
+
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
     }
 
     @Test
-    void testLoginUser_Success() {
-        LoginRequest loginRequest = new LoginRequest("john", "password");
-        User mockUser = new User(1L, "john", "password", Role.USER);
+    void testGetUserByUsername() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
-        when(userService.loginUser(loginRequest)).thenReturn(mockUser);
-        when(jwtUtils.generateToken("john")).thenReturn("mockToken");
+        ResponseEntity<User> response = restTemplate.exchange(
+                baseUrl + "/user/admin",
+                HttpMethod.GET,
+                requestEntity,
+                User.class
+        );
 
-        ResponseEntity<?> response = authController.loginUser(loginRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("mockToken", response.getBody());
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals("admin", response.getBody().getUsername());
     }
 
     @Test
-    void testLoginUser_InvalidRequest() {
-        ResponseEntity<?> response = authController.loginUser(null);
+    void testUpdateUser() {
+        RegisterRequest updateRequest = new RegisterRequest("updateduser", "newpassword", Role.ADMIN);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Invalid login request", response.getBody());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(token);
+
+        HttpEntity<RegisterRequest> requestEntity = new HttpEntity<>(updateRequest, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                baseUrl + "/user/3",
+                HttpMethod.PUT,
+                requestEntity,
+                String.class
+        );
+
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
-    void testGetUserByUsername_Found() {
-        User mockUser = new User(1L, "john", "password", Role.USER);
-        when(userService.findByUsername("john")).thenReturn(Optional.of(mockUser));
+    void testGetAllUsers() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<User> response = authController.getUserByUsername("john");
+        ResponseEntity<User[]> response = restTemplate.exchange(
+                baseUrl,
+                HttpMethod.GET,
+                requestEntity,
+                User[].class
+        );
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockUser, response.getBody());
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        List<User> users = List.of(response.getBody());
+        System.err.println(users);
+        Assertions.assertFalse(users.isEmpty());
+
     }
 
     @Test
-    void testGetUserByUsername_NotFound() {
-        when(userService.findByUsername("unknown")).thenReturn(Optional.empty());
+    void testDeleteUser() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<User> response = authController.getUserByUsername("unknown");
 
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNull(response.getBody());
+        ResponseEntity<String> deleteResponse = restTemplate.exchange(
+                baseUrl + "/user/3", HttpMethod.DELETE, requestEntity, String.class);
+
+
+        Assertions.assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
     }
+
 }
